@@ -7,6 +7,7 @@ import { ClienteDTO } from '../../models/cliente.dto';
 import { ClienteService } from '../../services/domain/cliente.service';
 import { CartService } from '../../services/domain/cart.service';
 import { PedidoService } from '../../services/domain/pedido.service';
+import { LoadingController } from 'ionic-angular/components/loading/loading-controller';
 
 @IonicPage()
 @Component({
@@ -26,7 +27,8 @@ export class OrderConfirmationPage {
     public navParams: NavParams,
     public clienteService: ClienteService,
     public cartService: CartService,
-    public pedidoService: PedidoService) {
+    public pedidoService: PedidoService,
+    public loadingCtrl: LoadingController) {
 
     this.pedido = this.navParams.get('pedido');
   }
@@ -62,16 +64,27 @@ export class OrderConfirmationPage {
   }
 
   checkout() {
+    let loader = this.presentLoading();
     this.pedidoService.insert(this.pedido)
       .subscribe(response => {
+        loader.dismiss();
         this.cartService.createOrClearCart();
         this.codpedido = this.extractId(response.headers.get('location'));
       },
       error => {
+        loader.dismiss();
         if (error.status == 403) {
           this.navCtrl.setRoot('HomePage');
         }
       });
+  }
+
+  presentLoading() {
+    let loader = this.loadingCtrl.create({
+      content: "Aguarde..."
+    });
+    loader.present();
+    return loader;
   }
 
   private extractId(location : string) : string {
